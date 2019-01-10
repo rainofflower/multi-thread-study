@@ -84,6 +84,21 @@ public class ThreadTest {
     }
 
     @Test
+    public void test0() throws InterruptedException {
+        for(int i = 0; i<10; i++){
+            new Thread(new Runnable(){
+                @Override
+                public void run() {
+                    for(int j = 0;j<100;j++){
+                        System.out.println(ThreadPool.getThreadPool());
+                    }
+                }
+            }).start();
+        }
+        Thread.sleep(5000);
+    }
+
+    @Test
     public void test(){
         ExecutorService pool = ThreadPool.getThreadPool();
         for(int i = 0; i<20; i++){
