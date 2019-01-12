@@ -3,14 +3,32 @@ package com.yanghui.study;
 import com.yanghui.study.bean.Singleton;
 import com.yanghui.study.bean.SynchronizedUse;
 import com.yanghui.study.bean.VolatileUse;
-import com.yanghui.study.thread.ThreadPool;
+import com.yanghui.study.util.ThreadPool;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ThreadPool.class})
 @Slf4j
 public class ThreadTest {
+
+    @Autowired
+    private ExecutorService threadPool;
+
+    @Test
+    public void test04(){
+        log.info(threadPool+"");
+        log.info(ThreadPool.getThreadPool()+"");
+        log.info((threadPool==ThreadPool.getThreadPool())+"");
+    }
 
     @Test
     public void test03() throws InterruptedException {
@@ -31,8 +49,8 @@ public class ThreadTest {
         pool.shutdown();
         while(true){
             if(pool.isTerminated()){
-                System.out.println("所有的线程都结束了！");
-                System.out.println("计算结果："+syncBean.inc);
+                log.info("所有的线程都结束了！");
+                log.info("计算结果："+syncBean.inc);
                 break;
             }
             Thread.sleep(1000);
@@ -58,8 +76,8 @@ public class ThreadTest {
         pool.shutdown();
         while(true){
             if(pool.isTerminated()){
-                System.out.println("所有的线程都结束了！");
-                System.out.println("计算结果："+bean.inc);
+                log.info("所有的线程都结束了！");
+                log.info("计算结果："+bean.inc);
                 break;
             }
             Thread.sleep(1000);
@@ -67,20 +85,27 @@ public class ThreadTest {
     }
 
     @Test
-    public void test01(){
+    public void test01() throws InterruptedException {
         ExecutorService pool = ThreadPool.getThreadPool();
         for(int i = 0; i<20; i++){
             Thread thread = new Thread(new Runnable(){
 
                 @Override
                 public void run() {
-                    System.out.println(Singleton.getInstance());
+                    log.info(Singleton.getInstance()+"");
                 }
             });
             //将线程放到池中执行；
             pool.execute(thread);
         }
         pool.shutdown();
+        while(true){
+            if(pool.isTerminated()){
+                log.info("所有的线程都结束了！");
+                break;
+            }
+            Thread.sleep(1000);
+        }
     }
 
     @Test
@@ -90,7 +115,7 @@ public class ThreadTest {
                 @Override
                 public void run() {
                     for(int j = 0;j<100;j++){
-                        System.out.println(ThreadPool.getThreadPool());
+                        log.info(ThreadPool.getThreadPool()+"");
                     }
                 }
             }).start();
@@ -99,20 +124,27 @@ public class ThreadTest {
     }
 
     @Test
-    public void test(){
+    public void test() throws InterruptedException, ExecutionException {
         ExecutorService pool = ThreadPool.getThreadPool();
-        for(int i = 0; i<20; i++){
+        int num = 3;
+        int count = 0;
+        for(int i = 0; i<num; i++){
             Thread thread = new Thread(new Runnable(){
 
                 @Override
                 public void run() {
-                    System.out.println(Thread.currentThread().getName()+"执行。。。。");
+                    log.info(Thread.currentThread().getName()+"执行。。。。");
                 }
             });
             //将线程放到池中执行；
-            pool.execute(thread);
+            Future<?> future = pool.submit(thread);
+            if(null == future.get()){
+                count++;
+                if(count == num){
+                    pool.shutdown();
+                }
+            }
         }
-        pool.shutdown();
     }
 
 }
