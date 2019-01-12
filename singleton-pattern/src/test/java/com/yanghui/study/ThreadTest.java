@@ -26,14 +26,14 @@ public class ThreadTest {
     @Test
     public void test04(){
         log.info(threadPool+"");
-        log.info(ThreadPool.getThreadPool()+"");
-        log.info((threadPool==ThreadPool.getThreadPool())+"");
+        log.info(ThreadPool.threadPool()+"");
+        log.info((threadPool==ThreadPool.threadPool())+"");
     }
 
     @Test
     public void test03() throws InterruptedException {
         SynchronizedUse syncBean = new SynchronizedUse();
-        ExecutorService pool = ThreadPool.getThreadPool();
+        ExecutorService pool = ThreadPool.threadPool();
         for(int i = 0;i<10;i++){
             Thread thread = new Thread(new Runnable(){
 
@@ -60,7 +60,7 @@ public class ThreadTest {
     @Test
     public void test02() throws InterruptedException {
         VolatileUse bean = new VolatileUse();
-        ExecutorService pool = ThreadPool.getThreadPool();
+        ExecutorService pool = ThreadPool.threadPool();
         for(int i = 0;i<10;i++){
             Thread thread = new Thread(new Runnable(){
 
@@ -86,7 +86,7 @@ public class ThreadTest {
 
     @Test
     public void test01() throws InterruptedException {
-        ExecutorService pool = ThreadPool.getThreadPool();
+        ExecutorService pool = ThreadPool.threadPool();
         for(int i = 0; i<20; i++){
             Thread thread = new Thread(new Runnable(){
 
@@ -115,7 +115,7 @@ public class ThreadTest {
                 @Override
                 public void run() {
                     for(int j = 0;j<100;j++){
-                        log.info(ThreadPool.getThreadPool()+"");
+                        log.info(ThreadPool.threadPool()+"");
                     }
                 }
             }).start();
@@ -125,7 +125,7 @@ public class ThreadTest {
 
     @Test
     public void test() throws InterruptedException, ExecutionException {
-        ExecutorService pool = ThreadPool.getThreadPool();
+        ExecutorService pool = ThreadPool.threadPool();
         int num = 3;
         int count = 0;
         for(int i = 0; i<num; i++){

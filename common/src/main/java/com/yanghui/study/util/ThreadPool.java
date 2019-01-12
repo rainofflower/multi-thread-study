@@ -14,7 +14,7 @@ public class ThreadPool {
     }
 
     @Bean
-    public static ExecutorService getThreadPool(){
+    public static ExecutorService threadPool(){
         return ThreadPoolHolder.threadPool;
     }
 }
