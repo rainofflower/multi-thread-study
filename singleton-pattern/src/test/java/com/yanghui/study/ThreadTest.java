@@ -15,12 +15,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {ThreadPool.class})
+//@RunWith(SpringRunner.class)
+//@SpringBootTest(classes = {ThreadPool.class})
 @Slf4j
 public class ThreadTest {
 
-    @Autowired
+    //@Autowired
     private ExecutorService threadPool;
 
     @Test

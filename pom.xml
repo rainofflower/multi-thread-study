@@ -12,6 +12,7 @@
         <module>singleton-pattern</module>
         <module>common</module>
         <module>future-task</module>
+        <module>rudiment-knowledge</module>
     </modules>
 
     <properties>
