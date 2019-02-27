@@ -22,7 +22,7 @@ public class MyTest {
     public void test1() throws ExecutionException, InterruptedException {
         ExecutorService pool = ThreadPool.threadPool();
         pool.submit(new RunnableTask());
-        Future<String> result = pool.submit(new Task());
+        Future<List> result = pool.submit(new Task<>());
         log.info(result.get()+"");
     }
 
