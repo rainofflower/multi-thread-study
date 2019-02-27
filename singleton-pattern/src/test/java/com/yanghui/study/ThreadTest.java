@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -22,6 +23,26 @@ public class ThreadTest {
 
     //@Autowired
     private ExecutorService threadPool;
+
+    @Test
+    public void test05() throws InterruptedException, ExecutionException {
+        VolatileUse volatileUse = new VolatileUse();
+        ExecutorService pool = ThreadPool.threadPool();
+        Future<String> result = pool.submit(new Callable<String>() {
+            @Override
+            public String call() throws InterruptedException {
+                System.out.println("线程执行中...");
+                volatileUse.doWork();
+                return "线程处理任务完成";
+            }
+        });
+        for(int i = 3; i>=0; i--){
+            Thread.sleep(1000);
+            System.out.println(i);
+        }
+        volatileUse.shutDown();
+        System.out.println(result.get());
+    }
 
     @Test
     public void test04(){
