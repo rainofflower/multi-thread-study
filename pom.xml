@@ -13,6 +13,7 @@
         <module>common</module>
         <module>future-task</module>
         <module>rudiment-knowledge</module>
+        <module>atomic-operation</module>
     </modules>
 
     <properties>
