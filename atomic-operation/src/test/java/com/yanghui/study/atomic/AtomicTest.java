@@ -1,9 +1,11 @@
 package com.yanghui.study.atomic;
 
+import com.yanghui.study.util.ThreadPool;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
 public class AtomicTest {
@@ -46,5 +48,38 @@ public class AtomicTest {
         System.out.println("complexClass1: a="+complexClass1.getA()+" b="+complexClass1.getB());
         System.out.println("stampedRef中的complexClass: a="+stampedRef.getReference().getA()+" b="+stampedRef.getReference().getB()+" stamp="+stampedRef.getStamp()+" complexClass是否是同一个："+(complexClass2==stampedRef.getReference()));
         System.out.println(System.currentTimeMillis()-start);
+    }
+
+    @Test
+    public void test2() throws InterruptedException {
+        ExecutorService pool = ThreadPool.threadPool();
+        for(int i = 0; i<10; i++){
+            Thread thread = new Thread(new Runnable(){
+
+                @Override
+                public void run() {
+                        System.out.println(SingletonByUnsafe.getInstance()+"");
+                }
+            });
+            pool.submit(thread);
+        }
+        for(int i = 0; i<10; i++){
+            Thread thread = new Thread(new Runnable(){
+
+                @Override
+                public void run() {
+                    System.out.println(SingletonByAtomic.getInstance()+"");
+                }
+            });
+            pool.submit(thread);
+        }
+        pool.shutdown();
+        while(true){
+            if(pool.isTerminated()){
+                System.out.println("所有的线程都结束了！");
+                break;
+            }
+            Thread.sleep(100);
+        }
     }
 }
