@@ -14,6 +14,7 @@
         <module>future-task</module>
         <module>rudiment-knowledge</module>
         <module>atomic-operation</module>
+        <module>lock</module>
     </modules>
 
     <properties>
