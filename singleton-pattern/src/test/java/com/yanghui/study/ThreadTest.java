@@ -30,13 +30,13 @@ public class ThreadTest {
         ExecutorService pool = ThreadPool.threadPool();
         Future<String> result = pool.submit(new Callable<String>() {
             @Override
-            public String call() throws InterruptedException {
+            public String call() {
                 System.out.println("线程执行中...");
                 volatileUse.doWork();
                 return "线程处理任务完成";
             }
         });
-        for(int i = 3; i>=0; i--){
+        for(int i = 1; i>=0; i--){
             Thread.sleep(1000);
             System.out.println(i);
         }

@@ -18,10 +18,10 @@ public class VolatileUse {
         shutDownRequested = true;
     }
 
-    public void doWork() throws InterruptedException {
+    public void doWork() {
         System.out.println("任务执行中...");
         while (!shutDownRequested){
-            //Thread.sleep(10);
+            //Thread.yield();
             //do somethings
         }
         System.out.println("退出任务");
