@@ -33,7 +33,7 @@ public class VolatileUse {
      * 关键点：count变量为volatile变量，允许多个线程的读操作
      * @return
      */
-    public int getCount(){
+    public final int getCount(){
         return count;
     }
 
