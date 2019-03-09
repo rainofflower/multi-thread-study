@@ -4,30 +4,38 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class LockTest {
 
     @Test
     public void test01() throws InterruptedException {
         List<Thread> threadList = new ArrayList<>();
-        TicketLock ticketLock = new TicketLock();
-        SpinLock spinLock = new SpinLock();
         Counter counter = new Counter();
+        ReentrantLock reentrantLock = new ReentrantLock();
+        SpinLock spinLock = new SpinLock();
+        TicketLock ticketLock = new TicketLock();
+        MCSLock mcsLock = new MCSLock();
         long start = System.currentTimeMillis();
         for (int i = 0; i<100; i++){
             Thread t = new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    //reentrantLock.lock();
                     //spinLock.lock();
-                    ticketLock.lock();
+                    //ticketLock.lock();
+                    MCSLock.MCSNode mcsNode = new MCSLock.MCSNode();
+                    mcsLock.lock(mcsNode);
                     try{
-                        for (int j = 0; j<1000; j++){
+                        for (int j = 0; j<10000; j++){
                             counter.increment();
                             //counter.synIncrement();
                         }
                     }finally {
+                        //reentrantLock.unlock();
                         //spinLock.unlock();
-                        ticketLock.unlock();
+                        //ticketLock.unlock();
+                        mcsLock.unlock(mcsNode);
                     }
                 }
             });
