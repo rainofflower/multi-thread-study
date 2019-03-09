@@ -16,6 +16,7 @@ public class LockTest {
         SpinLock spinLock = new SpinLock();
         TicketLock ticketLock = new TicketLock();
         MCSLock mcsLock = new MCSLock();
+        CLHLock clhLock = new CLHLock();
         long start = System.currentTimeMillis();
         for (int i = 0; i<100; i++){
             Thread t = new Thread(new Runnable() {
@@ -24,8 +25,10 @@ public class LockTest {
                     //reentrantLock.lock();
                     //spinLock.lock();
                     //ticketLock.lock();
-                    MCSLock.MCSNode mcsNode = new MCSLock.MCSNode();
-                    mcsLock.lock(mcsNode);
+                    //MCSLock.MCSNode mcsNode = new MCSLock.MCSNode();
+                    //mcsLock.lock(mcsNode);
+                    CLHLock.CLHNode clhNode = new CLHLock.CLHNode();
+                    clhLock.lock(clhNode);
                     try{
                         for (int j = 0; j<10000; j++){
                             counter.increment();
@@ -35,7 +38,8 @@ public class LockTest {
                         //reentrantLock.unlock();
                         //spinLock.unlock();
                         //ticketLock.unlock();
-                        mcsLock.unlock(mcsNode);
+                        //mcsLock.unlock(mcsNode);
+                        clhLock.unlock(clhNode);
                     }
                 }
             });
