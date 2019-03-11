@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class LockTest {
@@ -12,7 +13,7 @@ public class LockTest {
     public void test01() throws InterruptedException {
         List<Thread> threadList = new ArrayList<>();
         Counter counter = new Counter();
-        ReentrantLock reentrantLock = new ReentrantLock();
+        Lock reentrantLock = new ReentrantLock();
         SpinLock spinLock = new SpinLock();
         TicketLock ticketLock = new TicketLock();
         MCSLock mcsLock = new MCSLock();
