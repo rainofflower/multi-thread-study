@@ -23,25 +23,27 @@ public class LockTest {
             Thread t = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    //reentrantLock.lock();
+                    reentrantLock.lock();
                     //spinLock.lock();
                     //ticketLock.lock();
                     //MCSLock.MCSNode mcsNode = new MCSLock.MCSNode();
                     //mcsLock.lock(mcsNode);
-                    CLHLock.CLHNode clhNode = new CLHLock.CLHNode();
-                    clhLock.lock(clhNode);
-                    try{
-                        for (int j = 0; j<10000; j++){
-                            counter.increment();
-                            //counter.synIncrement();
+                    //CLHLock.CLHNode clhNode = new CLHLock.CLHNode();
+                    //clhLock.lock(clhNode);
+                    //synchronized (counter){
+                        try{
+                            for (int j = 0; j<10000; j++){
+                                counter.increment();
+                                //counter.synIncrement();
+                            }
+                        }finally {
+                            reentrantLock.unlock();
+                            //spinLock.unlock();
+                            //ticketLock.unlock();
+                            //mcsLock.unlock(mcsNode);
+                            //clhLock.unlock(clhNode);
                         }
-                    }finally {
-                        //reentrantLock.unlock();
-                        //spinLock.unlock();
-                        //ticketLock.unlock();
-                        //mcsLock.unlock(mcsNode);
-                        clhLock.unlock(clhNode);
-                    }
+                    //}
                 }
             });
             threadList.add(t);
