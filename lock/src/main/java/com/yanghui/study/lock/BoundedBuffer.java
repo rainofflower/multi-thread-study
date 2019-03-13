@@ -5,8 +5,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Condition的使用示例
- * 摘自Doug Lea在 java.util.concurrent.locks.Condition 接口注释中的代码
+ * <p>Condition的使用示例</p>
+ * 摘自Doug Lea在 {@link java.util.concurrent.locks.Condition} 接口注释中的代码
  */
 class BoundedBuffer {
     final Lock lock = new ReentrantLock();
