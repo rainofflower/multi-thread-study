@@ -16,6 +16,7 @@
         <module>atomic-operation</module>
         <module>lock</module>
         <module>monitor</module>
+        <module>thread-jdk</module>
     </modules>
 
     <properties>
