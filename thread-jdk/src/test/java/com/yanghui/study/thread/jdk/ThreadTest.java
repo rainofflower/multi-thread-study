@@ -18,16 +18,24 @@ public class ThreadTest {
     public void testLockSupport() throws InterruptedException {
         long begin = System.currentTimeMillis();
         Thread t1 = new Thread(()->{
-            System.out.println("线程1进入休眠...");
             long start = System.currentTimeMillis();
-            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
-            //LockSupport.park();
+//            System.out.println("线程1调用sleep(2000)...");
+//            try {
+//                Thread.sleep(2000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            System.out.println("线程1退出sleep()...");
+            System.out.println("线程1调用park()...");
+            //LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
+            LockSupport.park();
             System.out.println("线程1停止休眠，休眠时间："+(System.currentTimeMillis() - start));
         });
         t1.start();
         LockSupport.parkUntil(System.currentTimeMillis()+3000);
-        //LockSupport.unpark(t1);
-        t1.interrupt();
+        LockSupport.unpark(t1);
+        System.out.println("主线程给了线程1 permit...");
+        //t1.interrupt();
         t1.join();
         System.out.println("所有线程结束消耗时间："+(System.currentTimeMillis() - begin));
     }

@@ -1,5 +1,8 @@
 package com.yanghui.study.thread.jdk.interrept;
 
+import sun.misc.Unsafe;
+
+import java.lang.reflect.Field;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -41,7 +44,7 @@ import java.util.concurrent.locks.LockSupport;
  *
  * </pre>
  *
- * 我们说中断一个线程，其实就是设置了线程的 interrupted status 为 true，
+ * 我们说中断一个线程，其实就是设置了线程的 interruption status 为 true，
  * 至于说被中断的线程怎么处理这个状态，那是那个线程自己的事。如以下代码：
  * <pre>
  * while (!Thread.interrupted()) {
@@ -73,6 +76,8 @@ import java.util.concurrent.locks.LockSupport;
  */
 public class ThreadInterrupt {
 
+    private static final Unsafe UNSAFE;
+
     private Object obj = new Object();
 
     public void threadParkAndInterrupt() throws InterruptedException {
@@ -90,74 +95,65 @@ public class ThreadInterrupt {
             System.out.println("==>线程1再次被唤醒，此时线程1中断状态：" + Thread.currentThread().isInterrupted());
         },"线程1");
         t1.start();
-        Thread t2 = new Thread(() ->{
-            System.out.println("线程2执行中...");
-            try {
-                System.out.println("线程2休眠3秒...");
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                //ignore
-            }
-            System.out.println("线程2中断线程1...");
-            t1.interrupt();
-            try {
-                System.out.println("线程2再次休眠3秒...");
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                //ignore
-            }
-            System.out.println("线程2尝试唤醒线程1,等待线程1响应...");
-            LockSupport.unpark(t1);
-        },"线程2");
-        t2.start();
+        System.out.println("主线程执行中...");
+        System.out.println("主线程休眠5秒...");
+        LockSupport.parkUntil(System.currentTimeMillis()+5000);
+        System.out.println("主线程中断线程1...");
+        t1.interrupt();
+        System.out.println("主线程再次休眠5秒...");
+        LockSupport.parkUntil(System.currentTimeMillis()+5000);
+        System.out.println("主线程尝试唤醒线程1,等待线程1响应...");
+        LockSupport.unpark(t1);
         t1.join();
-        t2.join();
     }
 
    public void waitAndInterrupt() throws InterruptedException {
        Thread t1 = new Thread(() ->{
            System.out.println("线程1执行中...此时线程1中断状态：" + Thread.currentThread().isInterrupted());
-           System.out.println("==>线程1调用wait()释放锁进入阻塞状态...");
-           synchronized(obj){
+           synchronized(obj) {
                try {
+                   System.out.println("==>线程1调用wait()释放锁进入阻塞状态...");
                    obj.wait();
                } catch (InterruptedException e) {
-                    //
+                   //
                }
                System.out.println("==>线程1被唤醒,此时线程1中断状态：" + Thread.currentThread().isInterrupted());
-               System.out.println("==>线程1执行LockSupport.park()再次等待...");
-               LockSupport.park();
-               System.out.println("==>线程1再次被唤醒，此时线程1中断状态：" + Thread.currentThread().isInterrupted());
-               System.out.println("==>线程1再次等待...");
-               try {
-                   obj.wait();
-               } catch (InterruptedException e) {
-                    //
-               }
-               System.out.println("==>线程1再次被唤醒，此时线程1中断状态：" + Thread.currentThread().isInterrupted());
            }
+           //UNSAFE.fullFence();
+           System.out.println("==>线程1执行LockSupport.park()再次等待...");
+           LockSupport.park();
+           System.out.println("==>线程1再次被唤醒，此时线程1中断状态：" + Thread.currentThread().isInterrupted());
+           System.out.println("==>线程1执行LockSupport.park()再次等待...");
+           LockSupport.park();
+           System.out.println("==>线程1再次被唤醒，此时线程1中断状态：" + Thread.currentThread().isInterrupted());
        },"线程1");
        t1.start();
-       Thread t2 = new Thread(() ->{
-           System.out.println("线程2执行中...");
-           System.out.println("线程2休眠3秒...");
-           LockSupport.parkUntil(System.currentTimeMillis()+3000);
-           System.out.println("线程2中断线程1...");
-           t1.interrupt();
-           System.out.println("线程2再次休眠3秒...");
-           LockSupport.parkUntil(System.currentTimeMillis()+3000);
-           synchronized (obj){
-               System.out.println("线程2执行obj.notifyAll()唤醒obj对象的等待线程...");
-               obj.notifyAll();
-           }
-//           LockSupport.unpark(t1);
-//           System.out.println("线程2再次休眠3秒...");
-//           LockSupport.parkUntil(System.currentTimeMillis()+3000);
-//           System.out.println("线程2中断线程1...");
-//           t1.interrupt();
-       },"线程2");
-       t2.start();
+       System.out.println("主线程执行中...");
+       System.out.println("主线程休眠3秒...");
+       LockSupport.parkUntil(System.currentTimeMillis()+3000);
+       System.out.println("主线程中断线程1...");
+       t1.interrupt();
+       System.out.println("主线程再次休眠3秒...");
+       LockSupport.parkUntil(System.currentTimeMillis()+3000);
+//       synchronized (obj){
+//           System.out.println("主线程执行obj.notifyAll()唤醒obj对象的等待线程...");
+//           obj.notifyAll();
+//       }
+       LockSupport.unpark(t1);
+       System.out.println("主线程给了线程1 permit...");
        t1.join();
-       t2.join();
    }
+
+
+
+    static{
+        try {
+            Field unsafe = Unsafe.class.getDeclaredField("theUnsafe");
+            unsafe.setAccessible(true);
+            UNSAFE = (Unsafe) unsafe.get(null);
+        } catch (Exception ex) {
+            System.out.println("发生异常。。。");
+            throw new Error(ex);
+        }
+    }
 }
