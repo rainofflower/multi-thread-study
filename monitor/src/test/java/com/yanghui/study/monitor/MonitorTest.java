@@ -29,4 +29,9 @@ public class MonitorTest {
     public void test04() throws InterruptedException {
         monitorRule.waitAndNotify();
     }
+
+    @Test
+    public void test05() throws InterruptedException {
+        monitorRule.notifyAndInterrupt();
+    }
 }

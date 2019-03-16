@@ -1,5 +1,8 @@
 package com.yanghui.study.monitor;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+
 public class MonitorRule {
 
     private Object obj = new Object();
@@ -37,23 +40,34 @@ public class MonitorRule {
     }
 
     public void waitAndInterrupt() throws InterruptedException {
-        Thread t1 = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (obj){
-                    try {
-                        obj.wait(6000);
-                    } catch (InterruptedException e) {
-                        System.out.println("thread1被中断，wait()方法抛出InterruptedException异常...");
-                        return;
-                    }
-                    System.out.println("thread1正常退出...");
+        Thread t1 = new Thread(() -> {
+            synchronized (obj){
+                System.out.println("线程1 获取到监视器锁");
+                try {
+                    obj.wait();
+                    System.out.println("线程1 恢复啦。我为什么这么久才恢复，因为虽然线程2早就调用了notify方法，但线程2未立即释放锁，所以我还要获取锁成功之后才能继续执行。");
+                } catch (InterruptedException e) {
+                    System.out.println("线程1 wait方法抛出了InterruptedException异常，即使是异常，我也是要获取到监视器锁了才会抛出");
                 }
             }
         });
         t1.start();
-        Thread.sleep(3000);
-        t1.interrupt();
+        new Thread(() -> {
+            synchronized (obj){
+                System.out.println("线程2 拿到了监视器锁。为什么呢，因为线程1 在调用 wait 方法的时候会自动释放锁");
+                System.out.println("线程2 设置线程1 中断");
+                t1.interrupt();
+                System.out.println("线程2 执行完了 中断，先休息3秒再说。");
+                try {
+                    Thread.sleep(3000);
+                    System.out.println("线程2 休息完啦。注意了，调sleep方法和wait方法不一样，不会释放监视器锁");
+                } catch (InterruptedException e) {
+
+                }
+                System.out.println("线程2 休息够了，结束操作");
+            }
+        },"线程2").start();
+        t1.join();
     }
 
     public void waitAndNotify() throws InterruptedException {
@@ -65,6 +79,7 @@ public class MonitorRule {
                         System.out.println("线程1等待唤醒...");
                         //无限等待，直到当前线程被中断或者obj对象调用notify()/notifyAll()
                         obj.wait();
+                        System.out.println("线程1 恢复啦。我为什么这么久才恢复，因为虽然线程3早就调用了notify方法，但线程3未立即释放锁，所以我还要获取锁成功之后才能继续执行。");
                     } catch (InterruptedException e) {
                         System.out.println("线程1被中断，wait()方法抛出InterruptedException异常...");
                         return;
@@ -82,6 +97,7 @@ public class MonitorRule {
                     try {
                         System.out.println("线程2等待唤醒...");
                         obj.wait();
+                        System.out.println("线程2 恢复啦。我为什么这么久才恢复，因为虽然线程3早就调用了notify方法，但线程3未立即释放锁，所以我还要获取锁成功之后才能继续执行。");
                     } catch (InterruptedException e) {
                         System.out.println("线程2被中断，wait()方法抛出InterruptedException异常...");
                         return;
@@ -102,10 +118,10 @@ public class MonitorRule {
                      * 通知obj对象中的等待集合(线程集合)，被选中的一个线程将从等待集合中移出，可以让被移出的线程恢复。
                      * 注意：
                      * 1、对于哪个线程会被选中而被移出，虚拟机没有提供任何保证
-                     * 2、恢复之后的线程如果对obj对象进行加锁操作将不会成功，直到线程3完全释放锁之后
+                     * 2、恢复之后的线程如果对obj对象进行加锁操作将不会成功，直到线程3释放锁(执行完synchronized(obj)代码块)
                      *
                      * -->记住:
-                     * 被notify的线程在唤醒后是需要重新获取监视器锁的
+                     * 被notify的线程需要重新获取对象的监视器锁才能继续执行
                      */
                     obj.notify();
                     System.out.println("线程3执行了notify(),但是线程3依旧持有obj监视器锁...");
@@ -126,6 +142,60 @@ public class MonitorRule {
         }else{
             t1.interrupt();
         }
+    }
 
+    /**
+     * 该方法常见结果是线程2正常返回，然后线程1被中断抛出InterruptedException异常
+     * 也有可能线程1是正常返回的，虽然发生了中断，它的中断状态也确实是true，
+     * 但是它没有抛出InterruptedException异常，此时线程2将得不到唤醒，一直 wait
+     * @throws InterruptedException
+     */
+    public void notifyAndInterrupt() throws InterruptedException {
+        Thread t1 = new Thread(() ->{
+            synchronized (obj){
+                System.out.println("线程1 获取到监视器锁");
+                try {
+                    obj.wait();
+                    System.out.println("线程1 正常返回,此时线程1中断状态："+Thread.currentThread().isInterrupted());
+                } catch (InterruptedException e) {
+                    System.out.println("线程1 被中断，wait方法抛出InterruptedException异常,此时线程1中断状态："+Thread.currentThread().isInterrupted());
+                }
+            }
+        },"线程1");
+        t1.start();
+
+        Thread t2 = new Thread(() ->{
+            synchronized (obj){
+                System.out.println("线程2 获取到监视器锁");
+                try {
+                    obj.wait();
+                    System.out.println("线程2 正常返回,此时线程2中断状态："+Thread.currentThread().isInterrupted());
+                } catch (InterruptedException e) {
+                    System.out.println("线程2 被中断，wait方法抛出InterruptedException异常,此时线程2中断状态："+Thread.currentThread().isInterrupted());
+                }
+            }
+        },"线程2");
+        t2.start();
+        //确保线程3在线程1/2之后启动
+        LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+
+        Thread t3 = new Thread(()->{
+            synchronized (obj){
+                System.out.println("线程3 获取到监视器锁");
+                System.out.println("线程3 设置线程1中断");
+                t1.interrupt();
+                //volatile写，禁止中断和notify代码重排序
+                exit = true;
+                System.out.println("线程3 调用notify");
+                obj.notify();
+                System.out.println("线程3 休息3秒...");
+                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(3));
+                System.out.println("线程3 休息完了，退出同步代码块");
+            }
+        },"线程3");
+        t3.start();
+        t1.join();
+        t2.join();
+        t3.join();
     }
 }
