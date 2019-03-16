@@ -3,6 +3,7 @@ package com.yanghui.study.thread.jdk.interrept;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -81,9 +82,11 @@ public class ThreadInterrupt {
     private Object obj = new Object();
 
     public void threadParkAndInterrupt() throws InterruptedException {
+        //Thread mainThread = Thread.currentThread();
         Thread t1 = new Thread(() ->{
             System.out.println("线程1执行中...此时线程1中断状态：" + Thread.currentThread().isInterrupted());
             System.out.println("==>线程1被挂起");
+            //LockSupport.unpark(mainThread);
             //注意：LockSupport.park()挂起的线程被中断后也会导致线程唤醒，但是唤醒后不会重置中断状态
             LockSupport.park();
             //这里使用Thread.interrupted()重置线程中断状态为false,
@@ -95,6 +98,7 @@ public class ThreadInterrupt {
             System.out.println("==>线程1再次被唤醒，此时线程1中断状态：" + Thread.currentThread().isInterrupted());
         },"线程1");
         t1.start();
+        //LockSupport.park();
         System.out.println("主线程执行中...");
         System.out.println("主线程休眠5秒...");
         LockSupport.parkUntil(System.currentTimeMillis()+5000);
@@ -119,13 +123,14 @@ public class ThreadInterrupt {
                }
                System.out.println("==>线程1被唤醒,此时线程1中断状态：" + Thread.currentThread().isInterrupted());
            }
-           //UNSAFE.fullFence();
+           //设置内存屏障，防止前后代码重排序
+           UNSAFE.fullFence();
            System.out.println("==>线程1执行LockSupport.park()再次等待...");
            LockSupport.park();
            System.out.println("==>线程1再次被唤醒，此时线程1中断状态：" + Thread.currentThread().isInterrupted());
-           System.out.println("==>线程1执行LockSupport.park()再次等待...");
-           LockSupport.park();
-           System.out.println("==>线程1再次被唤醒，此时线程1中断状态：" + Thread.currentThread().isInterrupted());
+//           System.out.println("==>线程1执行LockSupport.park()再次等待...");
+//           LockSupport.park();
+//           System.out.println("==>线程1再次被唤醒，此时线程1中断状态：" + Thread.currentThread().isInterrupted());
        },"线程1");
        t1.start();
        System.out.println("主线程执行中...");
@@ -133,14 +138,14 @@ public class ThreadInterrupt {
        LockSupport.parkUntil(System.currentTimeMillis()+3000);
        System.out.println("主线程中断线程1...");
        t1.interrupt();
-       System.out.println("主线程再次休眠3秒...");
-       LockSupport.parkUntil(System.currentTimeMillis()+3000);
-//       synchronized (obj){
-//           System.out.println("主线程执行obj.notifyAll()唤醒obj对象的等待线程...");
-//           obj.notifyAll();
-//       }
-       LockSupport.unpark(t1);
-       System.out.println("主线程给了线程1 permit...");
+//       System.out.println("主线程再次休眠3秒...");
+//       LockSupport.parkUntil(System.currentTimeMillis()+3000);
+////       synchronized (obj){
+////           System.out.println("主线程执行obj.notifyAll()唤醒obj对象的等待线程...");
+////           obj.notifyAll();
+////       }
+//       LockSupport.unpark(t1);
+//       System.out.println("主线程给了线程1 permit...");
        t1.join();
    }
 
