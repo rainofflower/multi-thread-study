@@ -1,6 +1,7 @@
 package com.yanghui.study.thread.jdk;
 
 import com.yanghui.study.thread.jdk.interrept.ThreadInterrupt;
+import com.yanghui.study.thread.jdk.method.CommonMethod;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -63,5 +64,11 @@ public class ThreadTest {
     public void test03() throws InterruptedException {
         ThreadInterrupt threadInterrupt = new ThreadInterrupt();
         threadInterrupt.waitAndInterrupt();
+    }
+
+    @Test
+    public void test04() throws InterruptedException {
+        CommonMethod commonMethod = new CommonMethod();
+        commonMethod.interruptAndJoinAndSleep();
     }
 }
