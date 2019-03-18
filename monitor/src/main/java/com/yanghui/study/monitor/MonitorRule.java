@@ -200,25 +200,10 @@ public class MonitorRule {
     }
 
     /**
-     * LockSupport.park()方法和Thread.sleep()方法都不会释放监视器锁(不同于Object的wait方法)
+     * LockSupport.park()方法、Thread.sleep()方法和Thread的join()方法都不会释放监视器锁(不同于Object的wait方法)
      * @throws InterruptedException
      */
     public void objectMonitorLock1() throws InterruptedException {
-        Thread t1 = new Thread(() ->{
-            synchronized (obj){
-                System.out.println("线程1 获取到obj监视器锁");
-                System.out.println("线程1 调用LockSupport.parkNanos()休眠3秒");
-                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(3));
-                System.out.println("线程1 调用Thread.sleep()休眠3秒");
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    //
-                }
-                System.out.println("线程1 正常返回");
-            }
-        },"线程1");
-        t1.start();
         Thread t2 = new Thread(() ->{
             synchronized(obj){
                 System.out.println("线程2 获取到obj监视器锁");
@@ -227,6 +212,23 @@ public class MonitorRule {
                 System.out.println("线程2 正常返回");
             }
         },"线程2");
+        Thread t1 = new Thread(() ->{
+            synchronized (obj){
+                System.out.println("线程1 获取到obj监视器锁");
+                System.out.println("线程1 调用LockSupport.parkNanos()休眠3秒");
+                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(3));
+                try {
+                    //System.out.println("线程1 调用Thread.sleep()休眠3秒");
+                    //Thread.sleep(3000);
+                    System.out.println("线程1 调用t2.join(3000)等待线程2 3秒");
+                    t2.join(3000);
+                } catch (InterruptedException e) {
+                    //
+                }
+                System.out.println("线程1 正常返回");
+            }
+        },"线程1");
+        t1.start();
         t2.start();
         t1.join();
         t2.join();
@@ -235,7 +237,7 @@ public class MonitorRule {
     /**
      * 该方法发生死锁，说明Object的wait()方法只会释放调用wait方法的对象锁，而不会同时释放嵌套同步块中的其他对象锁
      * 每个对象不仅关联一个监视器（monitor），还关联一个等待集合（线程集合 wait set），wait方法只会释放相应的对象锁
-     * （ps：notify方法只会移除相对的对象的等待集合中的一个线程）
+     * （ps：notify方法只会移除相应的对象的等待集合中的一个线程）
      * @throws InterruptedException
      */
     public void objectMonitorLock2() throws InterruptedException {
