@@ -34,4 +34,19 @@ public class MonitorTest {
     public void test05() throws InterruptedException {
         monitorRule.notifyAndInterrupt();
     }
+
+    @Test
+    public void test06() throws InterruptedException {
+        monitorRule.objectMonitorLock1();
+    }
+
+    @Test
+    public void test07() throws InterruptedException {
+        monitorRule.objectMonitorLock2();
+    }
+
+    @Test
+    public void test08() throws InterruptedException {
+        monitorRule.objectMonitorLock3();
+    }
 }

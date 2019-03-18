@@ -198,4 +198,173 @@ public class MonitorRule {
         t2.join();
         t3.join();
     }
+
+    /**
+     * LockSupport.park()方法和Thread.sleep()方法都不会释放监视器锁(不同于Object的wait方法)
+     * @throws InterruptedException
+     */
+    public void objectMonitorLock1() throws InterruptedException {
+        Thread t1 = new Thread(() ->{
+            synchronized (obj){
+                System.out.println("线程1 获取到obj监视器锁");
+                System.out.println("线程1 调用LockSupport.parkNanos()休眠3秒");
+                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(3));
+                System.out.println("线程1 调用Thread.sleep()休眠3秒");
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    //
+                }
+                System.out.println("线程1 正常返回");
+            }
+        },"线程1");
+        t1.start();
+        Thread t2 = new Thread(() ->{
+            synchronized(obj){
+                System.out.println("线程2 获取到obj监视器锁");
+                System.out.println("线程2 调用LockSupport.parkNanos()休眠2秒");
+                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
+                System.out.println("线程2 正常返回");
+            }
+        },"线程2");
+        t2.start();
+        t1.join();
+        t2.join();
+    }
+
+    /**
+     * 该方法发生死锁，说明Object的wait()方法只会释放调用wait方法的对象锁，而不会同时释放嵌套同步块中的其他对象锁
+     * 每个对象不仅关联一个监视器（monitor），还关联一个等待集合（线程集合 wait set），wait方法只会释放相应的对象锁
+     * （ps：notify方法只会移除相对的对象的等待集合中的一个线程）
+     * @throws InterruptedException
+     */
+    public void objectMonitorLock2() throws InterruptedException {
+        Thread t1 = new Thread(() ->{
+            synchronized (obj){
+                System.out.println("线程1 获取到obj监视器锁");
+                synchronized (MonitorRule.class){
+                    System.out.println("线程1 获取到MonitorRule class对象监视器锁");
+                    System.out.println("线程1 obj.wait()释放obj监视器锁进入休眠");
+                    try {
+                        obj.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            System.out.println("线程1 正常返回");
+        },"线程1");
+        t1.start();
+        Thread t2 = new Thread(() ->{
+            System.out.println("线程2 调用LockSupport.parkNanos()休眠2秒");
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
+            synchronized(MonitorRule.class){
+                System.out.println("线程2 获取到MonitorRule class对象监视器锁");
+                synchronized (obj){
+                    System.out.println("线程2 获取到obj监视器锁");
+//                    System.out.println("线程2 调用LockSupport.parkNanos()休眠2秒");
+//                    LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
+                    obj.notify();
+                }
+            }
+            System.out.println("线程2 正常返回");
+        },"线程2");
+        t2.start();
+        t1.join();
+        t2.join();
+    }
+
+    /**
+     * 1、同步的static方法等同于synchronized(当前类的class对象)代码块
+     * 2、同步的实例方法等同于synchronized(当前实例)代码块
+     * 3、以上，显然，在同一个类中，静态同步方法之间构成同步，实例同步方法之间也构成同步，实例同步方法与静态同步方法之间不构成同步
+     * @throws InterruptedException
+     */
+    public void objectMonitorLock3() throws InterruptedException {
+        Thread t1 = new Thread(() ->{
+            //syncStaticMethod1();
+            syncInstanceMethod1();
+        });
+        Thread t2 = new Thread(() ->{
+            synchronized (MonitorRule.class){
+                System.out.println("线程2 执行中...");
+                System.out.println("线程2 调用LockSupport.parkNanos()休眠3秒");
+                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(3));
+                System.out.println("线程2 执行完成");
+            }
+        });
+        Thread t3 = new Thread(() ->{
+            //syncStaticMethod2();
+            syncInstanceMethod2();
+        });
+        t1.start();
+        t2.start();
+        t3.start();
+        t1.join();
+        t2.join();
+        t3.join();
+    }
+
+    /**
+     * 静态同步方法（带wait方法）
+     */
+    public static synchronized void syncStaticMethod1(){
+        System.out.println("syncStaticMethod1 方法执行中...");
+        System.out.println("syncStaticMethod1 方法调用LockSupport.parkNanos()休眠3秒");
+        LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(3));
+        //Thread.currentThread().yield();
+        try {
+            System.out.println("syncStaticMethod1 方法执行MonitorRule.class.wait()释放监视器锁进入休眠");
+            /**
+             * MonitorRule.class.wait()不会抛出IllegalMonitorStateException，因为synchronized方法等同于synchronized代码块
+             * 当前方法为static方法，synchronized关键字相当于synchronized(当前类的class对象)，即synchronized(MonitorRule.class)
+             */
+            MonitorRule.class.wait();
+        } catch (InterruptedException e) {
+            System.out.println("syncStaticMethod1 方法执行wait时线程发生中断");
+        }
+        System.out.println("syncStaticMethod1 方法执行完成");
+    }
+
+    /**
+     * 静态同步方法
+     */
+    public static synchronized void syncStaticMethod2(){
+        System.out.println("syncStaticMethod2 方法执行中...");
+        System.out.println("syncStaticMethod2 方法调用LockSupport.parkNanos()休眠3秒");
+        LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(3));
+        MonitorRule.class.notify();
+        System.out.println("syncStaticMethod2 方法执行完成");
+    }
+
+    /**
+     * 实例同步方法（带wait方法）
+     */
+    public synchronized void syncInstanceMethod1(){
+        System.out.println("syncInstanceMethod1 方法执行中...");
+        System.out.println("syncInstanceMethod1 方法调用LockSupport.parkNanos()休眠3秒");
+        LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(3));
+        try {
+            System.out.println("syncInstanceMethod1 方法执行this.wait()释放监视器锁进入休眠");
+            /**
+             * this.wait()不会抛出IllegalMonitorStateException，因为synchronized方法等同于synchronized代码块
+             * 当前方法为实例方法，synchronized关键字相当于synchronized(当前实例)，即synchronized(this)
+             */
+            this.wait();
+        } catch (InterruptedException e) {
+            System.out.println("syncStaticMethod1 方法执行wait时线程发生中断");
+        }
+        System.out.println("syncInstanceMethod1 方法执行完成");
+    }
+
+    /**
+     * 实例同步方法
+     */
+    public synchronized void syncInstanceMethod2(){
+        System.out.println("syncInstanceMethod2 方法执行中...");
+        System.out.println("syncInstanceMethod2 方法调用LockSupport.parkNanos()休眠3秒");
+        LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(3));
+        this.notify();
+        System.out.println("syncInstanceMethod2 方法执行完成");
+    }
 }
