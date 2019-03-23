@@ -2,8 +2,13 @@ package com.yanghui.study.thread.jdk;
 
 import com.yanghui.study.thread.jdk.interrept.ThreadInterrupt;
 import com.yanghui.study.thread.jdk.method.CommonMethod;
+import com.yanghui.study.util.ThreadPool;
 import org.junit.Test;
 
+import java.sql.Time;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
@@ -70,5 +75,21 @@ public class ThreadTest {
     public void test04() throws InterruptedException {
         CommonMethod commonMethod = new CommonMethod();
         commonMethod.interruptAndJoinAndSleep();
+    }
+
+    @Test
+    public void test05() throws InterruptedException, ExecutionException {
+        CommonMethod commonMethod = new CommonMethod();
+        ExecutorService pool = ThreadPool.threadPool();
+        Future<String> result = pool.submit(() -> {
+            System.out.println("线程1 执行中...");
+            commonMethod.sleepAndYield();
+            return "线程1 执行完成";
+        });
+        //System.out.println("主线程 休眠1秒，等待线程1开始执行任务...");
+        LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+        commonMethod.setDone();
+        System.out.println("主线程 将任务置为处理完成状态");
+        System.out.println(result.get());
     }
 }

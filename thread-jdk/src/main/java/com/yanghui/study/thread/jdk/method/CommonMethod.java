@@ -6,6 +6,31 @@ import java.util.concurrent.locks.LockSupport;
 public class CommonMethod {
 
     /**
+     * 注意done为非volatile变量
+     */
+    private boolean done = false;
+
+    public void setDone(){
+        done = true;
+    }
+
+    public void sleepAndYield(){
+        System.out.println("任务 处理中...");
+        while (!done) {
+//        System.out.println(done);
+//        System.out.println("任务 进入休眠");
+            Thread.yield();
+//        try {
+//            Thread.sleep(1);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+        }
+        //System.out.println("任务 退出休眠状态，此时能读取到主线程对共享变量的修改？" + done);
+        //System.out.println("任务处理完成");
+    }
+
+    /**
      * join方法和sleep方法对interrupt的感知与处理
      * @throws InterruptedException
      */
