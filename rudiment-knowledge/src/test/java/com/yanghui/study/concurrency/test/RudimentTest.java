@@ -3,8 +3,11 @@ package com.yanghui.study.concurrency.test;
 import com.yanghui.study.concurrency.rudiment.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
+import sun.misc.Unsafe;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -90,12 +93,46 @@ public class RudimentTest {
     }
 
     @Test
-    public void test7(){
+    public void test7() throws Exception{
         /**
          * UnsatisfiedLinkError
          */
         //new MemoryModel().jni();
-        new MemoryModel().thread1();
+//       MemoryModel memoryModel = new MemoryModel();//.thread1();
+//        log.info(memoryModel.getX()+"");
+//        MemoryModel memoryModel = new MemoryModel(1);
+//        log.info(memoryModel.f()+"");
+
+        log.info(MemoryModel.map.get("name"));
+        /**
+         * 以下为使用反射修改static final属性值（底层使用 Unsafe 类实现）
+         */
+        Field z = MemoryModel.class.getDeclaredField("map");
+//        z.setAccessible(true);
+//
+//        Field modifiers = Field.class.getDeclaredField("modifiers");
+//        modifiers.setAccessible(true);
+//        modifiers.setInt(z, z.getModifiers() & ~Modifier.FINAL);
+        Map<String, String> newMap = new HashMap<>();
+        newMap.put("name","sunshine");
+//        z.set(null, newMap);
+//        modifiers.setInt(z, z.getModifiers() &~Modifier.FINAL);
+//        log.info(MemoryModel.map.get("name"));
+//        int i = 3;
+//        // ~符号表示取反，即二进制中值取反（0和1互换）
+//        i = ~3;
+//        log.info(i+"");
+
+        /**
+         * 直接使用 Unsafe 修改static final属性
+         */
+        Field field = Unsafe.class.getDeclaredField("theUnsafe");
+        field.setAccessible(true);
+        Unsafe unsafe = (Unsafe) field.get(null);
+
+        long offset = unsafe.staticFieldOffset(z);
+        unsafe.putObject(MemoryModel.class, offset, newMap);
+        log.info(MemoryModel.map.get("name"));
     }
 
     @Test

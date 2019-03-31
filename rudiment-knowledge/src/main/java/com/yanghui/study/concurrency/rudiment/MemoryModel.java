@@ -2,6 +2,9 @@ package com.yanghui.study.concurrency.rudiment;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -33,11 +36,61 @@ public class MemoryModel {
 
     final int x;
     int y;
+    public static final Map<String,String> map;
+
+    static{
+        map = new HashMap<>();
+        map.put("name","yanghui");
+    }
 
     static MemoryModel m;
 
+    public MemoryModel(int value){
+        x = value;
+    }
+
+    public int f(){
+        return d(this, this);
+    }
+
+    /**
+     * 在一个线程内，允许 JVM 实现对于 final 属性的读操作与构造方法之外的对于这个 final 属性的修改进行重排序
+     * 在方法 d 中，编译器允许对 x 的读操作和方法 g 进行重排序，
+     * 这样的话，new MemoryModel().f()可能会返回 -1, 0, 或 1
+     */
+    int d(MemoryModel a1, MemoryModel a2){
+        int i = a1.x;
+        g(a1);
+        int j = a2.x;
+        return j - i;
+    }
+
+    static void g(MemoryModel a) {
+        //利用反射将a.x的值加 1
+        try{
+            Field x = MemoryModel.class.getDeclaredField("x");
+            x.setAccessible(true);
+            x.set(a,a.x+1);
+        }catch (Exception e){
+            log.error(e.getMessage());
+        }
+    }
+
     public MemoryModel(){
+        //log.info(x+"");
         x = 3;
+        log.info(x+"");
+        //下一行代码编译不通过，构造方法里只能给final属性写入一次值（指通过 = 号赋值）
+        //x = 4;
+        try {
+            //通过反射修改final字段的值
+            Field x = MemoryModel.class.getDeclaredField("x");
+            x.setAccessible(true);
+            x.set(this,4);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        log.info(x+"");
         y = 4;
     }
 
@@ -52,6 +105,9 @@ public class MemoryModel {
         }
     }
 
+    public int getX(){
+        return x;
+    }
 
     /**
      * native方法未给出外部实现会抛出java.lang.UnsatisfiedLinkError异常
