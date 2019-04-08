@@ -17,6 +17,7 @@
         <module>lock</module>
         <module>monitor</module>
         <module>thread-jdk</module>
+        <module>operation</module>
     </modules>
 
     <properties>
