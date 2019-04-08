@@ -205,4 +205,40 @@ public class RudimentTest {
             LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
         }
     }
+
+    /**
+     * 接口和抽象类无法实例化，但是依然可以使用 new 关键字
+     */
+    @Test
+    public void test10(){
+        com.yanghui.study.concurrency.rudiment.Map map = new com.yanghui.study.concurrency.rudiment.Map() {
+
+            public Object put(Object key, Object value) {
+                return null;
+            }
+
+            public Object get(Object key) {
+                return null;
+            }
+        };
+        log.info("new Map接口返回的引用调用size方法："+map.size());
+        log.info("Map接口调用静态method方法："+com.yanghui.study.concurrency.rudiment.Map.method());
+
+        com.yanghui.study.concurrency.rudiment.HashMap<String, String> hashMap = new com.yanghui.study.concurrency.rudiment.HashMap<>();
+        log.info("HashMap实例调用Map接口中的default size方法："+hashMap.size());
+        log.info("HashMap实例中获取Map接口中的capacity静态属性："+hashMap.capacity);
+
+        AbstractMap<String, String> abstractMap = new AbstractMap<String, String>() {
+
+            public String get(String key) {
+                return null;
+            }
+
+            protected Entry<String, String> getEntry(String key) {
+                return null;
+            }
+        };
+        log.info("new AbstractMap返回的引用调用size方法："+abstractMap.size());
+        log.info("AbstractMap调用静态staticMethod方法："+AbstractMap.staticMethod());
+    }
 }
