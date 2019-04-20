@@ -37,6 +37,10 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V> {
 //       return capacity;
 //    }
 
+    public static int staticMethod(){
+        return 1;
+    }
+
     static class Node<K,V> implements Map.Entry<K,V>{
 
         final int hash;

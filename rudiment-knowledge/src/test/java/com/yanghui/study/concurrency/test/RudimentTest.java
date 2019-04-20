@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -240,5 +241,56 @@ public class RudimentTest {
         };
         log.info("new AbstractMap返回的引用调用size方法："+abstractMap.size());
         log.info("AbstractMap调用静态staticMethod方法："+AbstractMap.staticMethod());
+    }
+
+    @Test
+    public void test11(){
+        Person person = new Person();
+        log.info(person.f+"");
+    }
+
+    /**
+     * HashMap源码解析
+     */
+    @Test
+    public void test12(){
+        final int MAXIMUM_CAPACITY = 1 << 30;
+        //float double 强转为 int 会直接舍弃掉小数位
+//        float a1 = 10.75f;
+//        int a2 = (int) a1;
+//        float b1 = 10.49f;
+//        int b2 = (int) b1;
+//        double c1 = 4.50d;
+//        int c2 = (int) c1;
+
+        int b = (1 << 31) - 1;
+        boolean flag = Integer.MAX_VALUE == b;
+        int cap = 255;
+        int n = cap - 1;
+        //右移 1 位再与移位前的值做异运算，结果就是最高位的 1 覆盖到第二高位（如果 n 的二进制数有两位的话，否则这步运算以及之后的几步都不会改变 n 的值），此时前两位都为 1
+        n |= n >>> 1;
+        //右移 2 位再与移位前的值做异运算，结果就是前两位的 1 覆盖到 第三、四高位，此时前四位都为 1
+        n |= n >>> 2;
+        //以此类推
+        n |= n >>> 4;
+        n |= n >>> 8;
+        //到此步，即使给定的 n 的二进制有32位，右移16位再与移位前的值做异运算，结果也是32位都是 1 （也就是2^32次幂）
+        n |= n >>> 16;
+        int threshold = (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;
+
+        Map<String, String> map = new HashMap<>(1);
+//        Map<String, String> map = new HashMap<>();
+        //测试用
+        String s = null;
+        //int num = 100000000;
+        int num = 100;
+        for(int i = 0; i<num;++i){
+            String key = UUID.randomUUID().toString();
+            if(i == 90){
+                s = key;
+            }
+            map.put(key,i+"");
+        }
+        String value = map.get(s);
     }
 }
