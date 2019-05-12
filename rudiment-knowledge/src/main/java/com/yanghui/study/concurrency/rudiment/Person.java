@@ -24,6 +24,11 @@ public class Person {
     //对象初始化值为 0.0
     public double d;
 
+    public Person(int age, String name){
+        this.age = age;
+        this.name = name;
+    }
+
     public Person(){
         System.out.println(name);
         log.info("initialize name");
@@ -39,5 +44,45 @@ public class Person {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    public boolean isFlag() {
+        return flag;
+    }
+
+    public void setFlag(boolean flag) {
+        this.flag = flag;
+    }
+
+    public float getF() {
+        return f;
+    }
+
+    public void setF(float f) {
+        this.f = f;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public BigDecimal getBd() {
+        return bd;
+    }
+
+    public void setBd(BigDecimal bd) {
+        this.bd = bd;
+    }
+
+    public double getD() {
+        return d;
+    }
+
+    public void setD(double d) {
+        this.d = d;
     }
 }
