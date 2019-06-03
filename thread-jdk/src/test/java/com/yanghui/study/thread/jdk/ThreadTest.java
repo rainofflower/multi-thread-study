@@ -2,14 +2,9 @@ package com.yanghui.study.thread.jdk;
 
 import com.yanghui.study.thread.jdk.interrept.ThreadInterrupt;
 import com.yanghui.study.thread.jdk.method.CommonMethod;
-import com.yanghui.study.util.ThreadPool;
 import org.junit.Test;
 
-import java.sql.Time;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 
 public class ThreadTest {
@@ -80,7 +75,7 @@ public class ThreadTest {
     @Test
     public void test05() throws InterruptedException, ExecutionException {
         CommonMethod commonMethod = new CommonMethod();
-        ExecutorService pool = ThreadPool.threadPool();
+        ExecutorService pool = Executors.newCachedThreadPool();
         Future<String> result = pool.submit(() -> {
             System.out.println("线程1 执行中...");
             commonMethod.sleepAndYield();

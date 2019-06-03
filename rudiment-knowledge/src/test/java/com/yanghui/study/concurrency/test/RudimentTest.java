@@ -1,24 +1,27 @@
 package com.yanghui.study.concurrency.test;
 
+import com.alibaba.fastjson.JSONObject;
 import com.yanghui.study.concurrency.rudiment.*;
 import com.yanghui.study.concurrency.rudiment.AbstractMap;
 //import com.yanghui.study.concurrency.rudiment.HashMap;
 //import com.yanghui.study.concurrency.rudiment.Map;
+import com.yanghui.study.concurrency.rudiment.server.SimpleHttpServer;
+import com.yanghui.study.concurrency.rudiment.util.DefaultThreadPool;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import sun.misc.Unsafe;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.sql.Time;
+import java.util.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
@@ -301,6 +304,39 @@ public class RudimentTest {
         String value = map.get(s);
     }
 
+    @Test
+    public void test12_1() throws InterruptedException {
+        int threadNum = 2;
+        int perSize = 5;
+        ExecutorService pool = Executors.newCachedThreadPool();
+        int count = 0;
+        while(true){
+            HashMap<String, String> map = new HashMap<>();
+            CountDownLatch countDownLatch = new CountDownLatch(threadNum);
+            for (int i = 0; i<threadNum ; i++){
+                pool.execute(()->{
+                    try {
+                        String s = UUID.randomUUID().toString();
+                        //System.out.println(s);
+                        for (int j = 1; j <= perSize; j++) {
+                            map.put(j+"", j + "");
+                        }
+                    }finally {
+                        countDownLatch.countDown();
+                    }
+                });
+            }
+            countDownLatch.await();
+            Map uniqueMap = new HashMap<>();
+            uniqueMap.putAll(map);
+            if(uniqueMap.size() != perSize*threadNum){
+                log.info("HashMap出现put并发问题。此时已经循环次数："+count);
+                break;
+            }
+            count ++;
+        }
+    }
+
     /**
      * ConcurrentHashMap源码解析
      */
@@ -324,6 +360,91 @@ public class RudimentTest {
             map.put(key,i+"");
         }
         String value = map.get(s);
+    }
+
+    @Test
+    public void test13_1() throws InterruptedException {
+        int threadNum = 10;
+        int perSize = 10;
+        ExecutorService pool = Executors.newCachedThreadPool();
+        int count = 0;
+        while(true){
+            Map<String, String> map = new ConcurrentHashMap<>();
+            CountDownLatch countDownLatch = new CountDownLatch(threadNum);
+            for (int i = 0; i<threadNum ; i++){
+                pool.execute(()->{
+                    try{
+                        String s = UUID.randomUUID().toString();
+                        for(int j = 0; j<perSize; j++){
+                            map.put(s+j,j+"");
+                        }
+                    }finally {
+                        countDownLatch.countDown();
+                    }
+                });
+            }
+            countDownLatch.await();
+            Map uniqueMap = new HashMap<>();
+            uniqueMap.putAll(map);
+            if(uniqueMap.size() != perSize*threadNum){
+                log.info("存在put同步问题");
+                break;
+            }
+            if(count > 100000){
+                log.info("不存在put同步问题");
+                break;
+            }
+            count++;
+        }
+    }
+
+    @Test
+    public void test13_2() throws InterruptedException {
+        int num = 500;
+        int keys = 20;
+        List<Object> list1 = new ArrayList<>();
+        String key = "key";
+        for(int i = 0; i<num; i++){
+            Map<String, Object> map = new HashMap<>();
+            for(int j = 0; j<keys; j++){
+                map.put(key+"-"+j, j);
+            }
+            list1.add(map);
+        }
+        long start = System.currentTimeMillis();
+        List<ConcurrentHashMap<String,Object>> list2 = new ArrayList<>(list1.size());
+//        list1.forEach( map ->{
+//            ConcurrentHashMap<String, Object> concurrentHashMap = new ConcurrentHashMap<>();
+//            concurrentHashMap.putAll((Map) map);
+//            list2.add(concurrentHashMap);
+//        });
+        for(Object map : list1) {
+            ConcurrentHashMap<String, Object> concurrentHashMap = new ConcurrentHashMap<>();
+            concurrentHashMap.putAll((Map) map);
+            list2.add(concurrentHashMap);
+        }
+        log.info("耗时："+ (System.currentTimeMillis() - start));
+        Executor pool = Executors.newCachedThreadPool();
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        pool.execute(()->{
+            ioOperator();
+            countDownLatch.countDown();
+        });
+        pool.execute(()->{
+            ioOperator();
+            countDownLatch.countDown();
+        });
+        countDownLatch.await();
+//        //log.info("HashMap转concurrentHashMap耗时："+ (System.currentTimeMillis() - start));
+        //long startio = System.currentTimeMillis();
+//        ioOperator();
+//        ioOperator();
+        //Map<Object, Map<String, Object>> collect = list1.stream().collect(Collectors.toMap(i -> i.get("key-0"), i -> i, (o,n)->o));
+        log.info("耗时："+ (System.currentTimeMillis() - start));
+    }
+
+    private void ioOperator(){
+        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(50));
     }
 
     @Test
@@ -396,4 +517,96 @@ public class RudimentTest {
         }
         log.info(System.currentTimeMillis() - start2 + "");
     }
+
+    @Test
+    public void test16(){
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        pool.execute(()->{
+            final int a;
+            a = 1;
+            log.info(a+"");
+        });
+        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+        ThreadInfo[] threadInfos = threadMXBean.dumpAllThreads(false, false);
+        for (ThreadInfo threadInfo : threadInfos){
+            log.info("[" + threadInfo.getThreadId() + "] " + threadInfo.
+                    getThreadName());
+        }
+    }
+
+
+    /**
+     * Intel i7 8750h长时间运行未出现构造函数final域初始化与被构造函数引用赋值给obj 重排序
+     * @throws InterruptedException
+     */
+    @Test
+    public void finalTest() throws InterruptedException {
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        int count = 0;
+        while(true){
+            CountDownLatch countDownLatch = new CountDownLatch(2);
+            FinalEscape.obj = null;
+            pool.execute(()-> {
+                FinalEscape.writer();
+                countDownLatch.countDown();
+            });
+            pool.execute(() -> {
+                if(FinalEscape.obj != null){
+                    if(FinalEscape.obj.i == 0){
+                        log.info("构造函数final域初始化和被构造函数溢出操作发生重排序");
+                        return;
+                    }
+                }
+                countDownLatch.countDown();
+            });
+            countDownLatch.await();
+            count ++;
+        }
+    }
+
+    @Test
+    public void testMyThreadPool() throws InterruptedException {
+        DefaultThreadPool pool = new DefaultThreadPool(2);
+        int jobNum = 6;
+        AtomicInteger atomicInteger = new AtomicInteger();
+        long start = System.currentTimeMillis();
+        CountDownLatch countDownLatch = new CountDownLatch(jobNum);
+        for(int i = 0; i<jobNum; i++){
+            pool.execute(()->{
+                //休眠5秒
+                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
+                log.info("任务执行完成");
+                int temp = atomicInteger.incrementAndGet();
+                if(temp == 5){
+                    //中断一个工作线程
+                    Thread.currentThread().interrupt();
+                }
+                countDownLatch.countDown();
+            });
+        }
+        pool.shutdown();
+        pool.addWorkers(2);
+        countDownLatch.await();
+        LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+        CountDownLatch countDownLatch2 = new CountDownLatch(jobNum);
+        for(int i = 0; i<jobNum; i++){
+            pool.execute(()->{
+                //休眠5秒
+                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
+                log.info("任务执行完成");
+                atomicInteger.incrementAndGet();
+                countDownLatch2.countDown();
+            });
+        }
+        pool.addWorkers(4);
+        countDownLatch2.await();
+        log.info("一共执行"+atomicInteger.get()+"个任务，耗费时间：" + (System.currentTimeMillis() - start));
+    }
+
+    @Test
+    public void testHttpServerWithThreadPool() throws Exception {
+        SimpleHttpServer.setBasePath("F:\\");
+        SimpleHttpServer.start();
+    }
+
 }

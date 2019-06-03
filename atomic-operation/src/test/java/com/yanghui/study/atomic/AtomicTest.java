@@ -1,11 +1,11 @@
 package com.yanghui.study.atomic;
 
-import com.yanghui.study.util.ThreadPool;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
 public class AtomicTest {
@@ -52,7 +52,7 @@ public class AtomicTest {
 
     @Test
     public void test2() throws InterruptedException {
-        ExecutorService pool = ThreadPool.threadPool();
+        ExecutorService pool = Executors.newCachedThreadPool();
         for(int i = 0; i<10; i++){
             Thread thread = new Thread(new Runnable(){
 

@@ -1,0 +1,9 @@
+thread:
+  pool:
+    coreSize: 4
+    maxSize: 10
+    capacity: 20
+    aliveSeconds: 60
+
+io:
+  thread: 4

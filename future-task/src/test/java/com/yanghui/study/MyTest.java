@@ -3,24 +3,21 @@ package com.yanghui.study;
 import com.yanghui.study.task.MyGeneric;
 import com.yanghui.study.task.RunnableTask;
 import com.yanghui.study.task.Task;
-import com.yanghui.study.util.ThreadPool;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
-import java.math.BigDecimal;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 @Slf4j
 public class MyTest {
     @Test
     public void test1() throws ExecutionException, InterruptedException {
-        ExecutorService pool = ThreadPool.threadPool();
+        ExecutorService pool = Executors.newCachedThreadPool();
         pool.submit(new RunnableTask());
         Future<List> result = pool.submit(new Task<>());
         log.info(result.get()+"");

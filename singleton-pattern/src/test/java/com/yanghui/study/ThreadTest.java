@@ -3,17 +3,12 @@ package com.yanghui.study;
 import com.yanghui.study.bean.Singleton;
 import com.yanghui.study.bean.SynchronizedUse;
 import com.yanghui.study.bean.VolatileUse;
-import com.yanghui.study.util.ThreadPool;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 //@RunWith(SpringRunner.class)
@@ -27,7 +22,7 @@ public class ThreadTest {
     @Test
     public void test05() throws InterruptedException, ExecutionException {
         VolatileUse volatileUse = new VolatileUse();
-        ExecutorService pool = ThreadPool.threadPool();
+        ExecutorService pool = Executors.newCachedThreadPool();
         Future<String> result = pool.submit(() ->{
             System.out.println("线程执行中...");
             volatileUse.doWork();
@@ -44,14 +39,14 @@ public class ThreadTest {
     @Test
     public void test04(){
         log.info(threadPool+"");
-        log.info(ThreadPool.threadPool()+"");
-        log.info((threadPool==ThreadPool.threadPool())+"");
+        log.info(Executors.newCachedThreadPool()+"");
+        log.info((threadPool==Executors.newCachedThreadPool())+"");
     }
 
     @Test
     public void test03() throws InterruptedException {
         SynchronizedUse syncBean = new SynchronizedUse();
-        ExecutorService pool = ThreadPool.threadPool();
+        ExecutorService pool = Executors.newCachedThreadPool();
         for(int i = 0;i<10;i++){
             Thread thread = new Thread(new Runnable(){
 
@@ -78,7 +73,7 @@ public class ThreadTest {
     @Test
     public void test02() throws InterruptedException {
         VolatileUse bean = new VolatileUse();
-        ExecutorService pool = ThreadPool.threadPool();
+        ExecutorService pool = Executors.newCachedThreadPool();
         for(int i = 0;i<10;i++){
             Thread thread = new Thread(new Runnable(){
 
@@ -104,7 +99,7 @@ public class ThreadTest {
 
     @Test
     public void test01() throws InterruptedException {
-        ExecutorService pool = ThreadPool.threadPool();
+        ExecutorService pool = Executors.newCachedThreadPool();
         for(int i = 0; i<20; i++){
             Thread thread = new Thread(new Runnable(){
 
@@ -133,7 +128,7 @@ public class ThreadTest {
                 @Override
                 public void run() {
                     for(int j = 0;j<100;j++){
-                        log.info(ThreadPool.threadPool()+"");
+                        log.info(Executors.newCachedThreadPool()+"");
                     }
                 }
             }).start();
@@ -143,7 +138,7 @@ public class ThreadTest {
 
     @Test
     public void test() throws InterruptedException, ExecutionException {
-        ExecutorService pool = ThreadPool.threadPool();
+        ExecutorService pool = Executors.newCachedThreadPool();
         int num = 3;
         int count = 0;
         for(int i = 0; i<num; i++){
