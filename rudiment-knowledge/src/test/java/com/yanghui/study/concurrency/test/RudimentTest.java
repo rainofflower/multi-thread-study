@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
@@ -609,4 +610,97 @@ public class RudimentTest {
         SimpleHttpServer.start();
     }
 
+    @Test
+    public void testList_1() throws InterruptedException {
+        /**
+         *  ArrayList初始容量为10，每次添加一个元素size+1,当size+1大于elementData.length时，
+         *  int oldCapacity = elementData.length;
+         *  int newCapacity = oldCapacity + (oldCapacity >> 1);
+         *  ...
+         *  elementData = Arrays.copyOf(elementData, newCapacity);
+         *  进行扩容，新容量=旧容量+旧容量右移1位，若调用无参构造方法，
+         *  扩容过程：0 -> 10 -> 15 -> 22 -> 33 -> 49 ...
+         *  ArrayList中涉及到的结构变化的方法在多线程中调用时外部必须做同步处理，以下摘自源码
+         *  If multiple threads access an ArrayList instance concurrently,
+         *  and at least one of the threads modifies the list structurally, it
+         *  must be synchronized externally.
+         *
+         *  源码doc文档中有一个同步方案 List list = Collections.synchronizedList(new ArrayList(...));
+         *  Collections.synchronizedList对list进行包装，其内部拥有一个被包装的list，
+         *  在调用add，remove等方法时执行以下方法体
+         *  synchronized (obj) {
+         *      list.add(index, element);
+         *  }
+         *
+         *  Vector除了方法加了同步，源码与ArrayList大致相同
+         */
+//        Object[] element = new Object[10];
+//        element[0] = 1;
+//        element[9] = 5;
+//        Object[] newElement = new Object[15];
+//        System.arraycopy(element, 0, newElement, 0, element.length);
+//        int newLength = newElement.length;
+//        Object[] copy = Arrays.copyOf(element, 15);
+//        int copyLength = copy.length;
+
+        int threadNum = 10000;
+        List list = new ArrayList();//Collections.synchronizedList(new ArrayList());
+//        for(int i = 1;i<=16;i++){
+//            list.add(i);
+//        }
+//        list.size();
+        ExecutorService pool = Executors.newCachedThreadPool();
+        CountDownLatch latch = new CountDownLatch(threadNum);
+        long start = System.currentTimeMillis();
+        for(int i = 0; i < threadNum;i++){
+            pool.execute(()->{
+                list.add(1);
+                latch.countDown();
+            });
+        }
+        latch.await();
+        log.info("耗时："+(System.currentTimeMillis()-start));
+        list.size();
+    }
+
+    @Test
+    public void testList_2() throws InterruptedException {
+        int threadNum = 10000;
+        List list = new ArrayList(10000);
+        ExecutorService pool = Executors.newCachedThreadPool();
+        CountDownLatch latch = new CountDownLatch(threadNum);
+        long start = System.currentTimeMillis();
+        for(int i = 0; i < threadNum;i++){
+            pool.execute(()->{
+                list.add(1);
+                latch.countDown();
+            });
+        }
+        latch.await();
+        log.info("耗时："+(System.currentTimeMillis()-start));
+        list.size();
+    }
+
+    @Test
+    public void testList_3() throws InterruptedException {
+        int threadNum = 10000;
+        List list = new ArrayList();
+        ExecutorService pool = Executors.newCachedThreadPool();
+        CountDownLatch latch = new CountDownLatch(threadNum);
+        for(int i = 0; i < threadNum;i++){
+            pool.execute(()->{
+                list.add(1);
+                Thread.yield();
+                latch.countDown();
+            });
+        }
+        pool.execute(() -> {
+            Iterator iterator = list.iterator();
+            while (iterator.hasNext()) {
+                iterator.next();
+            }
+        });
+        latch.await();
+        list.size();
+    }
 }
