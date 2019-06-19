@@ -338,6 +338,20 @@ public class RudimentTest {
         }
     }
 
+    @Test
+    public void test12_2() throws InterruptedException {
+        HashMap<String, String> map = new HashMap<>(2);
+        Thread thread = new Thread(() -> {
+            for(int i = 0; i<1000; i++){
+                new Thread(()->
+                    map.put(UUID.randomUUID().toString(),"")
+                        ,"Thread-"+i).start();
+            }
+        },"Thread-Put");
+        thread.start();
+        thread.join();
+    }
+
     /**
      * ConcurrentHashMap源码解析
      */
@@ -605,9 +619,22 @@ public class RudimentTest {
     }
 
     @Test
-    public void testHttpServerWithThreadPool() throws Exception {
+    public void testHttpServerWithThreadPool(){
         SimpleHttpServer.setBasePath("F:\\");
-        SimpleHttpServer.start();
+        try {
+            SimpleHttpServer.start();
+        }catch(Exception e){
+            log.info("发生错误:",e);
+        }
+    }
+
+    @Test
+    public void testConcurrentLinkedQueue(){
+        ConcurrentLinkedQueue<Integer> queue = new ConcurrentLinkedQueue<>();
+        int count = 4;
+        for(int i = 0; i<count; i++){
+            queue.offer(i);
+        }
     }
 
     @Test
@@ -702,5 +729,11 @@ public class RudimentTest {
         });
         latch.await();
         list.size();
+    }
+
+    @Test
+    public void testThreadPool(){
+        int cpu = Runtime.getRuntime().availableProcessors();
+        log.info("cpu数：{}",cpu);
     }
 }

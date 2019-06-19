@@ -1,5 +1,6 @@
 package com.yanghui.study;
 
+import com.yanghui.study.task.CountTask;
 import com.yanghui.study.task.MyGeneric;
 import com.yanghui.study.task.RunnableTask;
 import com.yanghui.study.task.Task;
@@ -8,10 +9,7 @@ import org.junit.Test;
 
 import java.text.ParseException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 @Slf4j
 public class MyTest {
@@ -21,6 +19,19 @@ public class MyTest {
         pool.submit(new RunnableTask());
         Future<List> result = pool.submit(new Task<>());
         log.info(result.get()+"");
+    }
+
+    @Test
+    public void test(){
+        ForkJoinPool forkJoinPool = new ForkJoinPool();
+        Future<Integer> result = forkJoinPool.submit(new CountTask(1, 100));
+        try {
+            log.info(result.get()+"");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test

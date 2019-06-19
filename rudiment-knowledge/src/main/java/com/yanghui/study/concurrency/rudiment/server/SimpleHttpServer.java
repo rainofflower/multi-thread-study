@@ -2,20 +2,31 @@ package com.yanghui.study.concurrency.rudiment.server;
 
 import com.yanghui.study.concurrency.rudiment.util.DefaultThreadPool;
 import com.yanghui.study.concurrency.rudiment.util.ThreadPool;
+import com.yanghui.study.util.DataQueryThreadPoolConfig;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 
+@Slf4j
 public class SimpleHttpServer {
 
     // 处理HttpRequest的线程池
-    static ThreadPool<HttpRequestHandler> threadPool = new DefaultThreadPool<>(10);
+    //static ThreadPool<HttpRequestHandler> threadPool = new DefaultThreadPool<>(10);
+    static ThreadPoolExecutor threadPool = new DataQueryThreadPoolConfig().dataQueryThreadPool();
     // SimpleHttpServer的根路径
     static String basePath;
     static ServerSocket serverSocket;
     // 服务监听端口
     static int port = 8080;
+
+    static AtomicInteger num = new AtomicInteger();
     public static void setPort(int port) {
         if (port > 0) {
             SimpleHttpServer.port = port;
@@ -32,10 +43,18 @@ public class SimpleHttpServer {
         Socket socket = null;
         while ((socket = serverSocket.accept()) != null) {
             // 接收一个客户端Socket，生成一个HttpRequestHandler，放入线程池执行
-            threadPool.execute(new HttpRequestHandler(socket));
+            try {
+                threadPool.execute(new HttpRequestHandler(socket));
+            }catch (Exception e){
+                if(e instanceof RejectedExecutionException){
+                    log.info("后台日志->线程池处理任务量过多，拒绝执行任务数："+num.incrementAndGet()+" ,错误信息："+e);
+                    log.info("用户看到的提示->服务器繁忙，请稍后重试");
+                }
+            }
         }
         serverSocket.close();
     }
+
     static class HttpRequestHandler implements Runnable {
 
         private Socket socket;
@@ -51,6 +70,7 @@ public class SimpleHttpServer {
             PrintWriter out = null;
             InputStream in = null;
             try {
+                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
                 reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String header = reader.readLine();
                 // 由相对路径计算出绝对路径
