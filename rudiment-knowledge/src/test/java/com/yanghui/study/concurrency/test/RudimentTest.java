@@ -427,7 +427,7 @@ public class RudimentTest {
             list1.add(map);
         }
         long start = System.currentTimeMillis();
-        List<ConcurrentHashMap<String,Object>> list2 = new ArrayList<>(list1.size());
+        List<Object> list2 = new ArrayList<>(list1.size());
 //        list1.forEach( map ->{
 //            ConcurrentHashMap<String, Object> concurrentHashMap = new ConcurrentHashMap<>();
 //            concurrentHashMap.putAll((Map) map);
@@ -732,8 +732,45 @@ public class RudimentTest {
     }
 
     @Test
-    public void testThreadPool(){
-        int cpu = Runtime.getRuntime().availableProcessors();
-        log.info("cpu数：{}",cpu);
+    public void testExchanger() throws InterruptedException {
+        Exchanger<Integer> exchanger = new Exchanger<>();
+        Thread t1 = new Thread(()->{
+            int i = 1;
+            try {
+                Integer exchange = exchanger.exchange(i);
+                log.info(Thread.currentThread().getName()+"线程原来的值："+i+" 交换之后的值："+exchange);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        },"t1");
+        Thread t2 = new Thread(()->{
+            int i = 2;
+            try {
+                Integer exchange = exchanger.exchange(i);
+                log.info(Thread.currentThread().getName()+"线程原来的值："+i+" 交换之后的值："+exchange);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        },"t2");
+        Thread t3 = new Thread(()->{
+            int i = 3;
+            try {
+                Integer exchange = exchanger.exchange(i);
+                log.info(Thread.currentThread().getName()+"线程原来的值："+i+" 交换之后的值："+exchange);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        },"t3");
+        t1.start();
+        t2.start();
+        t3.start();
+        t1.join();
+        t2.join();
+        t3.join(5000);
+        t3.interrupt();
+        //log.info("等待t3线程");
+        t3.join();
     }
+
+
 }

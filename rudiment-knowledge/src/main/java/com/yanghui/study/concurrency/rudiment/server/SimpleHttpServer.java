@@ -26,7 +26,12 @@ public class SimpleHttpServer {
     // 服务监听端口
     static int port = 8080;
 
-    static AtomicInteger num = new AtomicInteger();
+    static AtomicInteger receiveWorks = new AtomicInteger();
+
+    static AtomicInteger runWorks = new AtomicInteger();
+
+    static AtomicInteger rejectWorks = new AtomicInteger();
+
     public static void setPort(int port) {
         if (port > 0) {
             SimpleHttpServer.port = port;
@@ -42,12 +47,20 @@ public class SimpleHttpServer {
         serverSocket = new ServerSocket(port);
         Socket socket = null;
         while ((socket = serverSocket.accept()) != null) {
-            // 接收一个客户端Socket，生成一个HttpRequestHandler，放入线程池执行
+            log.info("响应任务数："+receiveWorks.incrementAndGet()+" 当前socket id:"+socket.hashCode());
+            /**
+             * 若不启用线程来处理请求(或让线程池来处理请求)，接受请求和处理请求耦合在一起，
+             * 都让main线程处理，那么main没把请求处理完，main线程将无法接收新请求（一个线程只能跟着代码顺序往下执行，专注忙一件事）
+             */
+            //接收一个客户端Socket，生成一个HttpRequestHandler，
+            // 单线程处理
+            //new HttpRequestHandler(socket).run();
+            // 放入线程池执行
             try {
                 threadPool.execute(new HttpRequestHandler(socket));
-            }catch (Exception e){
+            }catch (Throwable e){
                 if(e instanceof RejectedExecutionException){
-                    log.info("后台日志->线程池处理任务量过多，拒绝执行任务数："+num.incrementAndGet()+" ,错误信息："+e);
+                    log.info("后台日志->线程池处理任务量过多，拒绝执行任务数："+rejectWorks.incrementAndGet()+" ,错误信息："+e);
                     log.info("用户看到的提示->服务器繁忙，请稍后重试");
                 }
             }
@@ -70,7 +83,8 @@ public class SimpleHttpServer {
             PrintWriter out = null;
             InputStream in = null;
             try {
-                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
+                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+                log.info("处理任务数："+runWorks.incrementAndGet()+" 当前socket id:"+socket.hashCode());
                 reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String header = reader.readLine();
                 // 由相对路径计算出绝对路径
@@ -104,9 +118,11 @@ public class SimpleHttpServer {
                 }
                 out.flush();
             } catch (Exception ex) {
-                out.println("HTTP/1.1 500");
-                out.println("");
-                out.flush();
+                if(out != null){
+                    out.println("HTTP/1.1 500");
+                    out.println("");
+                    out.flush();
+                }
             } finally {
                 close(br, in, reader, out, socket);
             }
