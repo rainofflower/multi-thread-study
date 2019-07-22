@@ -12,3 +12,11 @@ String
 
 BlockingQueue
 ThreadPoolExecutor
+
+----------------------
+java线程状态查看命令：
+可以使用java命令 jps 列出系统中运行的java进程
+然后 使用 jstack + 进程号 查看当前进程信息，可看到不同线程的状态
+
+jconsole命令可以打开图形化界面
+
