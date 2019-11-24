@@ -30,7 +30,7 @@ public abstract class DefaultPromise<T> implements Promise<T> {
 
     private final Executor executor;
 
-    private List<Listener> listeners = new LinkedList<>();
+    private List<Listener> listeners;
 
     public DefaultPromise(Executor executor){
         this.executor = executor;
@@ -67,15 +67,17 @@ public abstract class DefaultPromise<T> implements Promise<T> {
 
     @Override
     public Future<T> addListener(Listener listener) {
+        synchronized (this){
+            if(listeners == null){
+                listeners = new LinkedList<>();
+            }
+            listeners.add(listener);
+        }
         if(isDone()){
             try {
-                listener.operationComplete(this);
+                notifyAllListeners();
             } catch (Exception e) {
                 //
-            }
-        }else{
-            synchronized (listeners){
-                listeners.add(listener);
             }
         }
         return this;
@@ -154,8 +156,10 @@ public abstract class DefaultPromise<T> implements Promise<T> {
 
     private void notifyAllListeners(){
         this.executor.execute(()->{
-            synchronized (listeners) {
-                if (!listeners.isEmpty()) {
+            synchronized (this) {
+                if (this.listeners != null && !this.listeners.isEmpty()) {
+                    List<Listener> listeners = this.listeners;
+                    this.listeners = null;
                     for (Listener l : listeners) {
                         try{
                             l.operationComplete(DefaultPromise.this);

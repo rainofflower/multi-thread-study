@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * Created by YangHui on 2019/11/24
@@ -14,9 +14,9 @@ public class MyFutureTest {
 
     @Test
     public void test(){
-        ExecutorService fixPool = Executors.newFixedThreadPool(1);
-        ExecutorService listeningPool = new EventExecutor(2,
-                5,
+        ExecutorService fixPool = Executors.newFixedThreadPool(2);
+        ExecutorService listeningPool = new EventExecutor(5,
+                10,
                 0,
                 TimeUnit.SECONDS,
                 new SynchronousQueue<>()
@@ -26,7 +26,7 @@ public class MyFutureTest {
             public void run() {
                 try {
                     log.info("处理任务1中...");
-                    Thread.sleep(8000);
+                    Thread.sleep(5000);
                     log.info("1处理完成");
 //                    throw new RuntimeException("发生未知错误");
                 } catch (InterruptedException e) {
@@ -59,6 +59,7 @@ public class MyFutureTest {
             }
         };
         listeningPool.execute(promise2);
+        LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
         promise.addListener(new Listener<Future<Void>>() {
             @Override
             public void operationComplete(Future future) throws Exception {
@@ -75,11 +76,22 @@ public class MyFutureTest {
             public void operationComplete(Future future) throws Exception {
                 if(future.isSuccess()){
                     log.info("任务2执行成功");
+                    log.info("休息5s ...");
+                    LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(5));
+                    log.info("休息好了...");
                 }
             }
         });
         try {
-            Thread.sleep(200000);
+            while(!promise.isDone() || !promise2.isDone()){
+                Thread.sleep(1000);
+            }
+            log.info("任务全部执行完成，等待回调全部执行...");
+            fixPool.shutdown();
+            while(!fixPool.isTerminated()){
+                Thread.yield();
+            }
+            log.info("回调全部执行完");
         } catch (InterruptedException e) {
             //
         }
