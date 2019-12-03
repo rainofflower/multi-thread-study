@@ -14,8 +14,12 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * 修改 ThreadPoolExecutor 源码中的 runWorker()方法,
  * 实现 异步回调 (netty中的Promise模式)
+ *
+ * 可以改造 run 方法而不用改jdk线程池，见 DefaultPromise
+ *
  * Created by YangHui on 2019/11/24
  */
+@Deprecated
 public class EventExecutor extends AbstractExecutorService{
 
     private final AtomicInteger ctl = new AtomicInteger(ctlOf(RUNNING, 0));
