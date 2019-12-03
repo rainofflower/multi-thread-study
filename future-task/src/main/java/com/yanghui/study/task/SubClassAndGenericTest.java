@@ -7,10 +7,7 @@ import com.yanghui.study.task.outterPackage.FanDto;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,19 +18,6 @@ import java.util.Map;
  */
 @Slf4j
 public class SubClassAndGenericTest {
-
-    @Test
-    public void test0(){
-        List<User> users = new ArrayList<>();
-        users.add(new User("name1",1));
-        users.add(new User("name2",2));
-        users.add(new User("name3",3));
-        String jsonString = JSON.toJSONString(users);
-        List<User> list = JSON.parseObject(jsonString, new TypeReference<List<User>>(){}.getType());
-        for(User user : list){
-            log.info(user.toString());
-        }
-    }
 
     @Test
     public void test() {
@@ -163,6 +147,19 @@ public class SubClassAndGenericTest {
         Type[] types = parameterizedTypeMap.getActualTypeArguments();
         System.out.println(types[0]);
         System.out.println(types[1]);
+    }
+
+    @Test
+    public void test0(){
+        List<User> users = new ArrayList<>();
+        users.add(new User("name1",1));
+        users.add(new User("name2",2));
+        users.add(new User("name3",3));
+        String jsonString = JSON.toJSONString(users);
+        List<User> list = JSON.parseObject(jsonString, new TypeReference<List<User>>(){}.getType());
+        for(User user : list){
+            log.info(user.toString());
+        }
     }
 
 
