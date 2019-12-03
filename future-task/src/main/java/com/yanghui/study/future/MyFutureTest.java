@@ -21,9 +21,9 @@ public class MyFutureTest {
                 TimeUnit.SECONDS,
                 new SynchronousQueue<>()
                 );
-        DefaultPromise promise = new DefaultPromise(fixPool) {
+        DefaultPromise promise = new DefaultPromise(new Callable(){
             @Override
-            public void run() {
+            public Void call() {
                 try {
                     log.info("处理任务1中...");
                     Thread.sleep(5000);
@@ -32,8 +32,10 @@ public class MyFutureTest {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                return null;
             }
-        };
+        },fixPool);
+
         promise.addListener(new Listener<Future<Void>>() {
             @Override
             public void operationComplete(Future future) throws Exception {
@@ -45,9 +47,9 @@ public class MyFutureTest {
             }
         });
         listeningPool.execute(promise);
-        DefaultPromise promise2 = new DefaultPromise(fixPool) {
+        DefaultPromise promise2 = new DefaultPromise(new Callable(){
             @Override
-            public void run() {
+            public Void call() {
                 try {
                     log.info("处理任务2中...");
                     Thread.sleep(8000);
@@ -56,8 +58,9 @@ public class MyFutureTest {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                return null;
             }
-        };
+        },fixPool);
         listeningPool.execute(promise2);
         LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
         promise.addListener(new Listener<Future<Void>>() {
