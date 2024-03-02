@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
 public class AtomicTest {
@@ -82,4 +83,17 @@ public class AtomicTest {
             Thread.sleep(100);
         }
     }
+
+    @Test
+    public void test3(){
+        AtomicInteger a = new AtomicInteger(Integer.MAX_VALUE);
+        System.out.println(a.getAndIncrement());
+        System.out.println(a.getAndIncrement());
+        AtomicInteger b = new AtomicInteger(Integer.MAX_VALUE - 10);
+        for(int i = 0; i<20;i++){
+            int increment = b.getAndIncrement();
+            System.out.println("b = " + increment + ",求余：" + (increment%10));
+        }
+    }
+
 }
