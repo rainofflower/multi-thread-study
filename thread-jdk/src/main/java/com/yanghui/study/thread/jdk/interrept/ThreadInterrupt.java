@@ -92,7 +92,7 @@ public class ThreadInterrupt {
             //这里使用Thread.interrupted()重置线程中断状态为false,
             //如果改成Thread.currentThread().isInterrupted(),那么中断状态不变，
             //若前面挂起的线程是由线程中断唤醒的，那么后面线程挂起(LockSupport.park())操作将会无效
-            System.out.println("==>线程1被唤醒,此时线程1中断状态：" + Thread.interrupted());
+            System.out.println("==>线程1被唤醒,此时线程1中断状态：" + Thread.currentThread().isInterrupted());
             System.out.println("==>线程1再次被挂起...");
             LockSupport.park();
             System.out.println("==>线程1再次被唤醒，此时线程1中断状态：" + Thread.currentThread().isInterrupted());
